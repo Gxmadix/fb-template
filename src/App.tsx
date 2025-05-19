@@ -4,6 +4,7 @@ import { auth } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import Home from './Home';
 import Login from './Login';
+import Header from './Header';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const [user, loading] = useAuthState(auth);
@@ -17,6 +18,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Router>
+      <Header />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route
