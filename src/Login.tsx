@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { auth } from './firebase';
 import {
     signInWithEmailAndPassword,
@@ -10,14 +11,18 @@ import {
 } from 'firebase/auth';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
+type FormData = {
+    email: string;
+    password: string;
+};
+
 function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const navigate = useNavigate();
+    const [user] = useAuthState(auth);
+    const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login');
-    const navigate = useNavigate();
-    const [user] = useAuthState(auth);
 
     useEffect(() => {
         if (user) {
@@ -25,38 +30,17 @@ function Login() {
         }
     }, [user, navigate]);
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (data: FormData) => {
         setLoading(true);
         setError('');
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            console.log('Login - User:', userCredential.user);
-        } catch (err: any) {
-            setError(err.message);
-        }
-        setLoading(false);
-    };
-
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            console.log('Register - User:', userCredential.user);
-        } catch (err: any) {
-            setError(err.message);
-        }
-        setLoading(false);
-    };
-
-    const handleReset = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        try {
-            await sendPasswordResetEmail(auth, email);
+            if (mode === 'login') {
+                const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+            } else if (mode === 'register') {
+                const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+            } else if (mode === 'reset') {
+                await sendPasswordResetEmail(auth, data.email);
+            }
         } catch (err: any) {
             setError(err.message);
         }
@@ -82,59 +66,30 @@ function Login() {
                 <button onClick={() => setMode('register')}>Register</button>
                 <button onClick={() => setMode('reset')}>Reset Password</button>
             </div>
-            {mode === 'login' && (
-                <form onSubmit={handleLogin}>
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
-                    />
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <input
+                    type="email"
+                    placeholder="Email"
+                    {...register('email', { required: 'Email is required' })}
+                />
+                {errors.email && <p style={{ color: 'red' }}>{errors.email.message}</p>}
+                {mode !== 'reset' && (
                     <input
                         type="password"
                         placeholder="Password"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
+                        {...register('password', { required: 'Password is required' })}
                     />
-                    <button type="submit" disabled={loading}>Login</button>
+                )}
+                {errors.password && <p style={{ color: 'red' }}>{errors.password.message}</p>}
+                <button type="submit" disabled={loading}>
+                    {mode === 'login' ? 'Login' : mode === 'register' ? 'Register' : 'Send Reset Email'}
+                </button>
+                {mode === 'login' && (
                     <button type="button" onClick={handleGoogleLogin} disabled={loading}>
                         Login with Google
                     </button>
-                </form>
-            )}
-            {mode === 'register' && (
-                <form onSubmit={handleRegister}>
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
-                    />
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
-                    />
-                    <button type="submit" disabled={loading}>Register</button>
-                </form>
-            )}
-            {mode === 'reset' && (
-                <form onSubmit={handleReset}>
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
-                    />
-                    <button type="submit" disabled={loading}>Send Reset Email</button>
-                </form>
-            )}
+                )}
+            </form>
             {error && <p style={{ color: 'red' }}>{error}</p>}
         </div>
     );
