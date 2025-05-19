@@ -1,28 +1,34 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { auth } from './firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import Home from './Home';
+import Login from './Login';
+
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const [user, loading] = useAuthState(auth);
+  console.log('PrivateRoute - User:', user);
+  console.log('PrivateRoute - Loading:', loading);
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  return <>{children}</>;
+}
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Firebase template App, with profile management.
-        </p>
-        <p>
-          Using React and typescript.
-        </p>
-        <a
-          className="App-link"
-          href="https://console.firebase.google.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Firebase
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <Home />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
