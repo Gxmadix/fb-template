@@ -8,15 +8,18 @@ function App() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Edit <code>src/App.tsx</code> and save to reload.
+          Firebase template App, with profile management.
+        </p>
+        <p>
+          Using React and typescript.
         </p>
         <a
           className="App-link"
-          href="https://reactjs.org"
+          href="https://console.firebase.google.com/"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React
+          Firebase
         </a>
       </header>
     </div>
