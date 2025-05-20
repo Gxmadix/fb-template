@@ -2,6 +2,13 @@
 
 This project is a template and quick starter for using Firebase with React. It provides a basic setup for authentication, including email/password and Google sign-in options.
 
+## Demo
+
+The application is automatically deployed when changes are merged to the main branch:
+
+- **Firebase Hosting**: [https://your-firebase-project-id.web.app](https://your-firebase-project-id.web.app)
+- **GitHub Pages**: [https://your-github-username.github.io/your-repo-name](https://your-github-username.github.io/your-repo-name)
+
 ## Features
 
 - Firebase Authentication
@@ -57,6 +64,13 @@ The app will be available at `http://localhost:3000`.
 - **Register**: Use the register form to create a new account.
 - **Reset Password**: Use the reset password form to send a password reset email.
 - **Google Login**: If enabled, use the Google login button to sign in with Google.
+
+## Deployment
+
+The application is automatically deployed when changes are merged to the main branch. The deployment is handled by GitHub Actions and can be configured to deploy to either:
+
+- **Firebase Hosting**: Set `DEPLOY_TARGET=firebase` in your GitHub repository secrets
+- **GitHub Pages**: Set `DEPLOY_TARGET=github` in your GitHub repository secrets
 
 ## Contributing
 
