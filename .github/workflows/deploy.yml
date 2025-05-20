@@ -1,4 +1,4 @@
-name: Deploy on PR Merge
+name: Deploy to Firebase
 
 on:
   pull_request:
@@ -6,7 +6,6 @@ on:
 
 # Define permissions for the workflow
 permissions:
-  contents: write  # Required for GitHub Pages deployment
   id-token: write  # Required for Firebase deployment
 
 jobs:
@@ -29,20 +28,10 @@ jobs:
     - name: Build
       run: npm run build
 
-    # Firebase Hosting Deployment
     - name: Deploy to Firebase
-      if: ${{ secrets.DEPLOY_TARGET == 'firebase' }}
       uses: FirebaseExtended/action-hosting-deploy@v0
       with:
         repoToken: '${{ secrets.GITHUB_TOKEN }}'
         firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
         channelId: live
-        projectId: '${{ secrets.FIREBASE_PROJECT_ID }}'
-
-    # GitHub Pages Deployment
-    - name: Deploy to GitHub Pages
-      if: ${{ secrets.DEPLOY_TARGET == 'github' }}
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        folder: build
-        branch: gh-pages 
+        projectId: '${{ secrets.FIREBASE_PROJECT_ID }}' 
