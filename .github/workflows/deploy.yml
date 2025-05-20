@@ -1,0 +1,48 @@
+name: Deploy on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+# Define permissions for the workflow
+permissions:
+  contents: write  # Required for GitHub Pages deployment
+  id-token: write  # Required for Firebase deployment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build
+      run: npm run build
+
+    # Firebase Hosting Deployment
+    - name: Deploy to Firebase
+      if: ${{ secrets.DEPLOY_TARGET == 'firebase' }}
+      uses: FirebaseExtended/action-hosting-deploy@v0
+      with:
+        repoToken: '${{ secrets.GITHUB_TOKEN }}'
+        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+        channelId: live
+        projectId: '${{ secrets.FIREBASE_PROJECT_ID }}'
+
+    # GitHub Pages Deployment
+    - name: Deploy to GitHub Pages
+      if: ${{ secrets.DEPLOY_TARGET == 'github' }}
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: build
+        branch: gh-pages 
