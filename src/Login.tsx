@@ -1,97 +1,119 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from './firebase';
-import {
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendPasswordResetEmail,
-    GoogleAuthProvider,
-    signInWithPopup,
-} from 'firebase/auth';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { Container, Paper, TextField, Button, Typography, Box, Alert, Link } from '@mui/material';
 
-type FormData = {
+type LoginFormInputs = {
     email: string;
     password: string;
 };
 
 function Login() {
     const navigate = useNavigate();
-    const [user] = useAuthState(auth);
-    const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login');
+    const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>();
 
-    useEffect(() => {
-        if (user) {
-            navigate('/');
-        }
-    }, [user, navigate]);
-
-    const onSubmit = async (data: FormData) => {
-        setLoading(true);
-        setError('');
+    const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
         try {
             if (mode === 'login') {
-                const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+                await signInWithEmailAndPassword(auth, data.email, data.password);
             } else if (mode === 'register') {
-                const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+                await createUserWithEmailAndPassword(auth, data.email, data.password);
             } else if (mode === 'reset') {
                 await sendPasswordResetEmail(auth, data.email);
+                setError('Password reset email sent. Check your inbox.');
+                return;
             }
-        } catch (err: any) {
-            setError(err.message);
+            navigate('/');
+        } catch (error) {
+            setError('Invalid email or password');
         }
-        setLoading(false);
     };
 
     const handleGoogleLogin = async () => {
-        setLoading(true);
-        setError('');
         try {
             const provider = new GoogleAuthProvider();
             await signInWithPopup(auth, provider);
-        } catch (err: any) {
-            setError(err.message);
+            navigate('/');
+        } catch (error) {
+            setError('Failed to login with Google');
         }
-        setLoading(false);
     };
 
     return (
-        <div style={{ maxWidth: 300, margin: '0 auto', padding: 20 }}>
-            <div style={{ marginBottom: 10 }}>
-                <button onClick={() => setMode('login')}>Login</button>
-                <button onClick={() => setMode('register')}>Register</button>
-                <button onClick={() => setMode('reset')}>Reset Password</button>
-            </div>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <input
-                    type="email"
-                    placeholder="Email"
-                    {...register('email', { required: 'Email is required' })}
-                />
-                {errors.email && <p style={{ color: 'red' }}>{errors.email.message}</p>}
-                {mode !== 'reset' && (
-                    <input
-                        type="password"
-                        placeholder="Password"
-                        {...register('password', { required: 'Password is required' })}
-                    />
-                )}
-                {errors.password && <p style={{ color: 'red' }}>{errors.password.message}</p>}
-                <button type="submit" disabled={loading}>
-                    {mode === 'login' ? 'Login' : mode === 'register' ? 'Register' : 'Send Reset Email'}
-                </button>
-                {mode === 'login' && (
-                    <button type="button" onClick={handleGoogleLogin} disabled={loading}>
-                        Login with Google
-                    </button>
-                )}
-            </form>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-        </div>
+        <Container component="main" maxWidth="xs">
+            <Box
+                sx={{
+                    marginTop: 8,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                }}
+            >
+                <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+                    <Typography component="h1" variant="h5" align="center" gutterBottom>
+                        {mode === 'login' ? 'Login' : mode === 'register' ? 'Register' : 'Reset Password'}
+                    </Typography>
+                    {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                        <TextField
+                            margin="normal"
+                            required
+                            fullWidth
+                            id="email"
+                            label="Email Address"
+                            autoComplete="email"
+                            autoFocus
+                            {...register('email', { required: 'Email is required' })}
+                            error={!!errors.email}
+                            helperText={errors.email?.message}
+                        />
+                        {mode !== 'reset' && (
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                label="Password"
+                                type="password"
+                                id="password"
+                                autoComplete="current-password"
+                                {...register('password', { required: 'Password is required' })}
+                                error={!!errors.password}
+                                helperText={errors.password?.message}
+                            />
+                        )}
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            sx={{ mt: 3, mb: 2 }}
+                        >
+                            {mode === 'login' ? 'Sign In' : mode === 'register' ? 'Register' : 'Send Reset Email'}
+                        </Button>
+                    </form>
+                    {mode === 'login' && process.env.REACT_APP_ENABLE_GOOGLE_LOGIN === 'true' && (
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            color="secondary"
+                            onClick={handleGoogleLogin}
+                            sx={{ mt: 2 }}
+                        >
+                            Login with Google
+                        </Button>
+                    )}
+                    <Box sx={{ mt: 2, textAlign: 'center' }}>
+                        <Link href="#" onClick={() => setMode('login')} sx={{ mr: 2 }}>Login</Link>
+                        <Link href="#" onClick={() => setMode('register')} sx={{ mr: 2 }}>Register</Link>
+                        <Link href="#" onClick={() => setMode('reset')}>Reset Password</Link>
+                    </Box>
+                </Paper>
+            </Box>
+        </Container>
     );
 }
 
