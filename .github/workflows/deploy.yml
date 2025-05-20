@@ -23,7 +23,10 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    # github.event.pull_request.merged == true for auto-deploy
+    # github.event_name == 'workflow_dispatch' for manual deploy
+
+    if: github.event_name == 'workflow_dispatch'
     environment: ${{ github.event.inputs.environment || 'production' }}
 
     steps:
