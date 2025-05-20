@@ -3,6 +3,16 @@ name: Deploy to Firebase
 on:
   pull_request:
     types: [closed]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
 
 # Define permissions for the workflow
 permissions:
@@ -13,7 +23,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event.inputs.environment || 'production' }}
 
     steps:
     - name: Checkout code
